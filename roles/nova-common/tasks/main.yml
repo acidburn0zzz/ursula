@@ -1,25 +1,17 @@
 ---
-- name: Check if nova user exists
-  action: shell getent passwd nova
-  register: nova_user
-  ignore_errors: True
-  changed_when: False
+- name: '!!! you must run ursula/playbooks/fix-nova-user.yml because this environment has nova user with no homedir'
+  shell: '! grep nova /etc/passwd | grep nonexistent'
 
 - name: nova user
-  user: name=nova shell=/bin/false createhome=no
-  when: nova_user.rc == 0
-
-- name: nova user
-  user: name=nova comment=nova shell=/bin/false system=yes home=/nonexistent createhome=no
-  when: nova_user.rc != 0
+  user: name=nova comment=nova shell=/bin/false system=yes createhome=yes
 
 - apt: pkg=python-numpy
 
 - name: get nova source repo
-  git: | 
-    repo={{ openstack.git_mirror }}/nova.git 
-    dest=/opt/stack/nova 
-    version={{ nova.rev }} 
+  git: |
+    repo={{ openstack.git_mirror }}/nova.git
+    dest=/opt/stack/nova
+    version={{ nova.rev }}
     update={{ openstack.git_update }}
   notify:
     - pip install nova

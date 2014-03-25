@@ -1,0 +1,23 @@
+---
+
+- name: nova .ssh dir
+  file: dest=/var/lib/nova/.ssh owner=nova group=nova mode=700 state=directory
+
+- name: nova private key
+  template: src=var/lib/nova/ssh/id_rsa dest=/var/lib/nova/.ssh/id_rsa owner=nova group=nova mode=0600
+  when: nova.private_key is defined
+
+- name: nova authorized_keys
+  lineinfile: dest=/var/lib/nova/.ssh/authorized_keys line='{{ nova.public_key }}' create=yes
+  when: nova.public_key is defined
+
+- name: nova authorized_keys perms
+  file: dest=/var/lib/nova/.ssh/authorized_keys owner=nova group=nova mode=0600
+
+- name: nova known_hosts is present
+  file: dest=/var/lib/nova/.ssh/known_hosts owner=nova group=nova mode=0644
+
+- name: a script to populate known_hosts with hostkeys for all compute nodes
+  template: src=var/lib/nova/ssh/populate_known_hosts dest=/var/lib/nova/.ssh/populate_known_hosts owner=nova group=nova mode=0755
+
+- shell: /var/lib/nova/.ssh/populate_known_hosts

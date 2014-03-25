@@ -1,0 +1,16 @@
+#!/bin/bash
+set -e
+IPS="{% for host in groups['compute'] -%}{{ hostvars[host][primary_interface]['ipv4']['address'] }} {% endfor -%}"
+DIR="$(dirname "$(readlink -f "$0")")"
+
+for ip in $IPS; do
+  echo checking hostkey for $ip
+  hashed_key=$(ssh-keyscan $ip 2>/dev/null)
+  if ! grep "$hashed_key" $DIR/known_hosts >/dev/null; then
+    echo "$ip not found; adding to known_hosts"
+    echo "$hashed_key" >> $DIR/known_hosts
+  fi
+
+  # verify passwordless ssh works
+  sudo -u nova -H /bin/sh -c "ssh $ip uptime"
+done
